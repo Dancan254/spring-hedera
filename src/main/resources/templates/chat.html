@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hedera AI Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .chat-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            height: 70vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #e9ecef;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        .message.user {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+            margin-left: auto;
+            text-align: right;
+        }
+        .message.ai {
+            background-color: #f1f0f0;
+            align-self: flex-start;
+            margin-right: auto;
+            text-align: left;
+        }
+        .chat-input-area {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+        }
+        .chat-input-area input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+            outline: none;
+        }
+        .chat-input-area button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            cursor: pointer;
+            outline: none;
+        }
+        .chat-input-area button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">Hedera AI Chat Assistant <button id="clearChat" style="float:right; padding: 5px 10px; border-radius: 5px; border: none; background-color: #0056b3; color: white; cursor: pointer;">Clear Chat</button></div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Type your message...">
+            <button id="sendMessage">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatInput = document.getElementById('chatInput');
+        const sendMessageBtn = document.getElementById('sendMessage');
+        const chatMessages = document.getElementById('chatMessages');
+        const clearChatBtn = document.getElementById('clearChat');
+
+        sendMessageBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        clearChatBtn.addEventListener('click', clearChat);
+
+        loadMessagesFromLocalStorage();
+
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+            if (sender === 'ai') {
+                messageDiv.innerHTML = marked.parse(message);
+            } else {
+                messageDiv.textContent = message;
+            }
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            saveMessageToLocalStorage(message, sender);
+        }
+
+        function saveMessageToLocalStorage(message, sender) {
+            let messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+            messages.push({ message: message, sender: sender });
+            localStorage.setItem('chatMessages', JSON.stringify(messages));
+        }
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message === '') return;
+
+            addMessage(message, 'user');
+            chatInput.value = '';
+
+            try {
+                const response = await fetch('http://localhost:8082/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    addMessage(data.response, 'ai');
+                } else {
+                    addMessage("Error: " + data.response, 'ai');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage('Could not connect to the chat service. Please try again', 'ai');
+            }
+        }
+
+        function loadMessagesFromLocalStorage() {
+            const messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+            messages.forEach(msg => {
+                addMessage(msg.message, msg.sender);
+            });
+        }
+
+        function clearChat() {
+            localStorage.removeItem('chatMessages');
+            chatMessages.innerHTML = ''; // Clear displayed messages
+            // Optionally, send a message to the backend to clear its memory too
+            // This would require a new endpoint on the BlockchainChatController
+            fetch('http://localhost:8082/api/chat/clear-history', { method: 'POST' });
+        }
+    </script>
+</body>
+</html>
