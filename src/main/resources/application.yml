@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: spring-hedera
+  ai:
+    azure:
+      openai:
+        api-key: ${API_KEY}
+        endpoint: ${ENDPOINT}
+        chat:
+          options:
+            deployment-name: gpt-4o
+            temperature: 0.7
+            max-tokens: 1000
+
+hedera:
+  network: testnet
+  operator:
+    account-id: ${ACCOUNT_ID}
+    private-key: ${PRIVATE_KEY}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        exclude: health, info, metrics
+
+logging:
+  level:
+    com.javaguy: DEBUG
+    com.hedera: DEBUG
+    org.springframework.ai: DEBUG
+    io.grpc: INFO
+    root: INFO
+
+server:
+  port: 8082
