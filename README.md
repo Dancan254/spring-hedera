@@ -40,3 +40,4 @@ mvn test
 ## Configuration
 
 The Hedera network, Azure OpenAI configuration, and other application settings are located in `src/main/resources/application.yml`. You **must** update this file with your actual `API_KEY`, `ENDPOINT`, `ACCOUNT_ID`, and `PRIVATE_KEY` values, replacing the placeholders (e.g., `${API_KEY}`).
+# spring-hedera
