@@ -2,21 +2,29 @@ spring:
   application:
     name: spring-hedera
   ai:
-    azure:
-      openai:
-        api-key: ${API_KEY}
-        endpoint: ${ENDPOINT}
+    google:
+      genai:
+        api-key: ${API_KEY:}
         chat:
           options:
-            deployment-name: gpt-4o
+            model: gemini-2.5-flash
             temperature: 0.7
-            max-tokens: 1000
+#  ai:
+#    azure:
+#      openai:
+#        api-key: ${API_KEY:}
+#        endpoint: ${ENDPOINT:}
+#        chat:
+#          options:
+#            deployment-name: gpt-4o
+#            temperature: 0.7
+#            max-tokens: 1000
 
 hedera:
   network: testnet
   operator:
-    account-id: ${ACCOUNT_ID}
-    private-key: ${PRIVATE_KEY}
+    account-id: ${ACCOUNT_ID:}
+    private-key: ${PRIVATE_KEY:}
 
 management:
   endpoints:
