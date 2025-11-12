@@ -2,7 +2,6 @@ package com.javaguy.hedera.files;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -21,9 +20,8 @@ public class BlockchainChatController {
     private final ChatClient chatClient;
     private final BlockchainTools blockchainTools;
     private final LoanAssistanceService loanAssistanceService;
-    private ChatMemory chatMemory = MessageWindowChatMemory.builder().build();
 
-    public BlockchainChatController(ChatModel chatModel, BlockchainTools blockchainTools, LoanAssistanceService loanAssistanceService) {
+    public BlockchainChatController(ChatModel chatModel, ChatMemory chatMemory, BlockchainTools blockchainTools, LoanAssistanceService loanAssistanceService) {
         this.blockchainTools = blockchainTools;
         this.loanAssistanceService = loanAssistanceService;
         this.chatClient = ChatClient.builder(chatModel)
@@ -34,7 +32,7 @@ public class BlockchainChatController {
                     IMPORTANT: When users ask about blockchain operations, you MUST call the appropriate function:
                     
                     1. For balance checking: ALWAYS call checkBalance function with the account ID
-                    2. For token creation: ALWAYS call createToken function 
+                    2. For token creation: ALWAYS call createToken function
                     3. For token transfers: ALWAYS call transferTokens function
                     4. For account creation: ALWAYS call createAccount function
                     
@@ -46,7 +44,7 @@ public class BlockchainChatController {
                     - createToken: Use this for token creation
                     - transferTokens: Use this for token transfers  
                     - createAccount: Use this for new account creation
-                    
+                    You are allowed to answer simple conversational questions (like names and greetings) using the conversation history, but avoid complex topics outside the scope of Hedera services.
                     Do not answer any questions of of the scope of the application which is handling the hedera services
                     """)
                 .build();
@@ -56,9 +54,13 @@ public class BlockchainChatController {
     public AIChatResponse chat(@RequestBody AIChatRequest request) {
         try {
             logger.info("Received chat request: {}", request.message());
+            String conversationId = "general-chat-session";
+
+            logger.info("Using conversation ID: {}", conversationId);
 
             String response = chatClient.prompt()
                     .user(request.message())
+                    .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                     .tools(blockchainTools)
                     .call()
                     .content();
