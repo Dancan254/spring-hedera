@@ -19,6 +19,8 @@ public class HederaService {
     public BlockchainModels.OperationResult createToken(BlockchainModels.TokenCreateRequest request) {
         try{
             logger.info("Creating token: {} ({})", request.name(), request.symbol());
+            assert client.getOperatorAccountId() != null;
+            assert client.getOperatorPublicKey() != null;
             TokenCreateTransaction transaction = new TokenCreateTransaction()
                     .setTokenName(request.name())
                     .setTokenSymbol(request.symbol())
@@ -85,8 +87,7 @@ public class HederaService {
                     .execute(client);
 
             BalanceInfo balanceInfo = new BalanceInfo(
-                    balance.hbars.toString(),
-                    balance.tokens.toString()
+                    balance.hbars.toString()
             );
 
             logger.info("Balance retrieved for {}: {} HBAR", request.accountId(), balance.hbars);
@@ -168,6 +169,6 @@ public class HederaService {
         }
     }
     // Helper records for response data
-    public record BalanceInfo(String hbarBalance, String tokenBalances) {}
+    public record BalanceInfo(String hbarBalance) {}
     public record AccountInfo(String accountId, String publicKey, String privateKey) {}
 }
